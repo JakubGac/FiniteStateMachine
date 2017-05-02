@@ -8,5 +8,11 @@
 
 import Foundation
 
-print("Hello, World!")
+let menu = Menu()
+
+if CommandLine.argc < 2 {
+    ConsoleIO.printInfo()
+} else {
+    menu.staticMode()
+}
 
