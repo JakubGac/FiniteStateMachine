@@ -59,9 +59,10 @@ class FiniteStateMachine {
     }
 
     func scan(textToScan: String) {
-        var content = textToScan
+        var content = Array(textToScan.characters)
+        var index = 0
         
-        for character in content.characters {
+        while index < content.count {
             var matched = false
             
             for item in machineTransitions {
@@ -69,13 +70,13 @@ class FiniteStateMachine {
                     if currentState == item.0 {
                         let pattern = regexParts().get(element: item.2)
                         let regex = try! NSRegularExpression(pattern: pattern, options: [])
-                        let matches = regex.matches(in: character.description, options: [], range: NSRange(location: 0, length: 1))
+                        let matches = regex.matches(in: content[index].description, options: [], range: NSRange(location: 0, length: 1))
                         if matches.count != 0 {
                             // correct symbol
                             // changing machine state
                             currentState = item.1
                             // adding new symbol to remembered string
-                            rememberedString.append(character)
+                            rememberedString.append(content[index])
                             // marking that the symbol has been recognized
                             matched = true
                         }
@@ -89,6 +90,8 @@ class FiniteStateMachine {
                 currentState = .A
                 rememberedString = ""
             }
+            
+            index += 1
         }
         
         print("koniec skanowania")
