@@ -42,8 +42,8 @@ private struct regexParts {
 }
 
 class FiniteStateMachine {
-    // first state, second state, expression
-    private var machineTransitions = Array<(machineStates, machineStates, regexPartsTypes)>()
+    // first state, second state, expression, number of symbols in expression to check
+    private var machineTransitions = Array<(machineStates, machineStates, regexPartsTypes, Int)>()
     // machine working tmp's
     private var currentState: machineStates = .A
     private var rememberedString: String = ""
@@ -51,11 +51,11 @@ class FiniteStateMachine {
     private var endState: machineStates = .D
     
     init() {
-        machineTransitions.append((.A, .B, .leftSide))
-        machineTransitions.append((.B, .B, .leftSide))
-        machineTransitions.append((.B, .C, .dot))
-        machineTransitions.append((.C, .D, .rightSidePL))
-        machineTransitions.append((.C, .D, .rightSideCOM))
+        machineTransitions.append((.A, .B, .leftSide, 1))
+        machineTransitions.append((.B, .B, .leftSide, 1))
+        machineTransitions.append((.B, .C, .dot, 1))
+        machineTransitions.append((.C, .D, .rightSidePL, 2))
+        machineTransitions.append((.C, .D, .rightSideCOM, 3))
     }
 
     func scan(textToScan: String) {
@@ -70,15 +70,25 @@ class FiniteStateMachine {
                     if currentState == item.0 {
                         let pattern = regexParts().get(element: item.2)
                         let regex = try! NSRegularExpression(pattern: pattern, options: [])
-                        let matches = regex.matches(in: content[index].description, options: [], range: NSRange(location: 0, length: 1))
-                        if matches.count != 0 {
-                            // correct symbol
-                            // changing machine state
-                            currentState = item.1
-                            // adding new symbol to remembered string
-                            rememberedString.append(content[index])
-                            // marking that the symbol has been recognized
-                            matched = true
+                        var tmp = index
+                        var string = ""
+                        if index + item.3 <= content.count {
+                            while tmp < index + item.3 {
+                                string.append(content[tmp])
+                                tmp += 1
+                            }
+                            let matches = regex.matches(in: string, options: [], range: NSRange(location: 0, length: item.3))
+                            if matches.count != 0 {
+                                // correct symbol
+                                // changing machine state
+                                currentState = item.1
+                                // adding new symbol to remembered string
+                                rememberedString.append(string)
+                                // marking that the symbol has been recognized
+                                matched = true
+                                // moving finite machine
+                                index += item.3
+                            }
                         }
                     }
                 }
@@ -87,15 +97,21 @@ class FiniteStateMachine {
             if matched == false {
                 // no match found
                 // reset the machine
-                currentState = .A
+                currentState = startState
                 rememberedString = ""
+                if rememberedString == "" {
+                    // if we don't have any remembered word we want to move forward
+                    index += 1
+                }
             }
             
-            index += 1
+            if currentState == endState {
+                // we are in accepted state
+                print("Znalezione slowo: \(rememberedString)")
+                matched = false
+                currentState = startState
+                rememberedString = ""
+            }
         }
-        
-        print("koniec skanowania")
-        print("aktualny stan automat: \(currentState)")
-        print("zapamiętane słowo: \(rememberedString)")
     }
 }
