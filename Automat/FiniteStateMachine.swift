@@ -98,11 +98,11 @@ class FiniteStateMachine {
                 // no match found
                 // reset the machine
                 currentState = startState
-                rememberedString = ""
                 if rememberedString == "" {
                     // if we don't have any remembered word we want to move forward
                     index += 1
                 }
+                rememberedString = ""
             }
             
             if currentState == endState {
